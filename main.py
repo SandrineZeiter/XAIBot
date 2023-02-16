@@ -76,10 +76,10 @@ def lime_testing_userinput(userinput):
     print("Prediction ", prediction)
 
     # Get the explanations
-    explanations = '\n'.join(map(str, exp.as_list(label=class_index)))
+    explanations = exp.as_list(label=class_index)
     explanations_as_array = np.array(explanations)
-    print("Explanations: ", explanations)
-    print("Explanations as array: ", explanations_as_array)
+    # print("Explanations: ", explanations)
+    # print("Explanations as array: ", explanations_as_array)
     # print('Explanation for class %s' % class_names[class_index])
     # print('\n'.join(map(str, exp.as_list(label=class_index))))
 
@@ -89,7 +89,7 @@ def lime_testing_userinput(userinput):
     plt.savefig("figure.png", bbox_inches="tight")
     # plt.show()
 
-    return prediction
+    return prediction, explanations_as_array
 
 
 # ----------------------- Flask app -----------------------
@@ -140,10 +140,26 @@ def webhook():
             # print("end of input")
             # print("User input 1", userinput)
         else:
-            prediction = lime_testing_userinput(text_to_analyze)
+            prediction, explanations = lime_testing_userinput(text_to_analyze)
+            words = []
+            weightings = []
+            for i in range(len(explanations)):
+                for k in range(2):
+                    # print("Position: ", i, k, explanations[i][k])
+                    if k == 0:
+                        words.append(explanations[i][k])
+                    else:
+                        weightings.append(explanations[i][k])
+
+            print("Words:", words)
+            print("Weightings:", weightings)
+
+
             fulfillment_text = "Thank you " + name + " for telling me about your day. " \
-                                                     "According to what you said, you feel " + prediction + "."
-            #fulfillment_text = "Thank you " + name + " for telling me about your day. According to what you said, you feel " + prediction + "."
+                                                     "According to what you said, you feel " \
+                               + prediction + ". The word with the biggest influence for this choice is: " + words[0]
+
+            # fulfillment_text = "Thank you " + name + " for telling me about your day. According to what you said, you feel " + prediction + "."
             text_to_analyze = ''  # So that I don't have to restart the whole script over and over again.
             name = ''
 
