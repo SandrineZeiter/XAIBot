@@ -1,5 +1,6 @@
 # ----------------------- imports -----------------------
 # imports for flask
+from PIL.Image import Image
 from flask import request, Flask
 
 # imports for ML
@@ -86,10 +87,10 @@ def lime_testing_userinput(userinput):
     # Create the plot and save it
     exp.show_in_notebook([class_index])
     exp.as_pyplot_figure(label=exp.available_labels()[0])
-    plt.savefig("figure.png", bbox_inches="tight")
+    figure = plt.savefig("figure.png", bbox_inches="tight")
     # plt.show()
 
-    return prediction, explanations_as_array
+    return prediction, explanations_as_array, figure
 
 
 # ----------------------- Flask app -----------------------
@@ -108,6 +109,7 @@ def webhook():
     req = request.get_json(silent=True, force=True)
 
     fulfillment_text = ''
+    fulfillment_image = None
     query_result = req.get('queryResult')
     # print(query_result)
 
@@ -129,42 +131,62 @@ def webhook():
         # Make sure to get enough data to analyze.
         if len(text_to_analyze) < 64:
             possible_answers = ["Please, tell me more.", "Please, let me know more about that.",
-                                "I would like to get to know you better, so can you tell me more?",
+                                "I would like to get to know you better, so, can you tell me more?",
                                 "To get to know you better, I still need some information",
                                 "Thank you " + name + ". But could you tell me more?"]
 
             fulfillment_text = random.choice(possible_answers)
-            # print("Text too short")
-            # textToAnalyze = textToAnalyze + " " + userinput
-            # print("Text to analyze: ", text_to_analyze)
-            # print("end of input")
-            # print("User input 1", userinput)
+            fulfillment_image = None
+
         else:
-            prediction, explanations = lime_testing_userinput(text_to_analyze)
-            words = []
-            weightings = []
+            prediction, explanations, figure = lime_testing_userinput(text_to_analyze)
+            words = np.array([])
+            weights = np.array([])
             for i in range(len(explanations)):
                 for k in range(2):
                     # print("Position: ", i, k, explanations[i][k])
                     if k == 0:
-                        words.append(explanations[i][k])
+                        words = np.append(words, explanations[i][k])
                     else:
-                        weightings.append(explanations[i][k])
+                        weights = np.append(weights, explanations[i][k])
 
-            print("Words:", words)
-            print("Weightings:", weightings)
+            # print("Words:", words)
+            # print("Weightings:", weights)
 
+            weights = weights.astype(float)
+            negative_idx = np.argwhere(weights < 0)
+            positive_idx = np.argwhere(weights > 0)
+            negative_words = np.array([])
+            positive_words = np.array([])
+
+            if negative_idx.size != 0:
+                negative_idx = np.concatenate(negative_idx)
+                for i in negative_idx:
+                    negative_words = np.append(negative_words, words[i])
+
+                print(negative_words)
+
+            if positive_idx.size != 0:
+                positive_idx = np.concatenate(positive_idx)
+                for i in positive_idx:
+                    positive_words = np.append(positive_words, words[i])
+
+                print(positive_words)
 
             fulfillment_text = "Thank you " + name + " for telling me about your day. " \
                                                      "According to what you said, you feel " \
                                + prediction + ". The word with the biggest influence for this choice is: " + words[0]
 
             # fulfillment_text = "Thank you " + name + " for telling me about your day. According to what you said, you feel " + prediction + "."
+           # fulfillment_image = ("/Users/sandrinezeiter/Library/CloudStorage/OneDrive-UniversitédeFribourg/"
+            #       "Thesis/Chatty/XAIBot/figure.png")
+            fulfillment_image = "https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg"
             text_to_analyze = ''  # So that I don't have to restart the whole script over and over again.
             name = ''
 
     return {
         "fulfillment_text": fulfillment_text,
+        "fulfillment_image": fulfillment_image,
         "source": "webhookdata"
     }
 
