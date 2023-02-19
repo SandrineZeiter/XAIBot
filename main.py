@@ -1,8 +1,5 @@
 # ----------------------- imports -----------------------
 # imports for flask
-import cProfile
-import timeit
-
 from flask import request, Flask
 
 # imports for ML
@@ -70,12 +67,6 @@ gs.fit(train.tweet, train.feeling)
 
 # Initialization phase
 explainer = LimeTextExplainer(class_names=class_names)
-# p1 = Pipeline([
-#     ('vect', CountVectorizer()),
-#     ('tfidf', TfidfTransformer()),
-#     ('clf', MultinomialNB(alpha=1))
-# ])
-# p1.fit(train.tweet, train.sub_category)
 
 
 def lime_testing_userinput(userinput):
@@ -83,26 +74,18 @@ def lime_testing_userinput(userinput):
     # explainer = LimeTextExplainer(class_names=class_names)
     # p1.fit(train.tweet, train.sub_category)
     exp = explainer.explain_instance(userinput,
-                                     # p1.predict_proba,
-                                     gs.predict_proba,
+                                     gs.predict_proba, # instead of p1.predict_proba
                                      num_samples=5000,
                                      num_features=5,
                                      top_labels=len(class_names))
-    # print(userinput)
-    # get index of the predicted class name
-    class_index = exp.available_labels()[0]
-    # print("Class index ", class_index)
 
+    # get index of the predicted class name and the prediction
+    class_index = exp.available_labels()[0]
     prediction = class_names[class_index]
-    # print("Prediction ", prediction)
 
     # Get the explanations
     explanations = exp.as_list(label=class_index)
     explanations_as_array = np.array(explanations)
-    # print("Explanations: ", explanations)
-    # print("Explanations as array: ", explanations_as_array)
-    # print('Explanation for class %s' % class_names[class_index])
-    # print('\n'.join(map(str, exp.as_list(label=class_index))))
 
     # Create the plot and save it
     exp.show_in_notebook([class_index])
