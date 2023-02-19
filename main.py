@@ -129,6 +129,14 @@ def webhook():
             # print(name)
             fulfillment_text = "Hi " + name + ", nice to meet you. Please, tell me something about your day."
 
+    elif action == 'denial':
+        userinput = query_result["queryText"]
+        text_to_analyze += " " + userinput
+        fulfillment_text = "Too bad, you don't want to tell me anything. Are you really sure?"
+
+    elif action == 'confirmation':
+        fulfillment_text = "Thanks anyway for your time, " + name + ". Have a nice day."
+
     elif action == 'getinformation':
         userinput = query_result["queryText"]
         text_to_analyze += " " + userinput
@@ -161,7 +169,7 @@ def webhook():
             # Create fulfillment text for the chatbot
             fulfillment_text = "Thank you {} for telling me about your day. According to what you said, " \
                                "you feel {}. The words in favor of my choice for your feeling are " \
-                               "\"{}\"".format(name, prediction, '", "'.join(str(word) for word in positive_words))
+                               "\"{}\".".format(name, prediction, '", "'.join(str(word) for word in positive_words))
 
             if negative_idx.size > 0:
                 fulfillment_text += ". The words that do not support my choice are: \"{}\".".format(
