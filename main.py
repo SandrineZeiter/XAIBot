@@ -80,7 +80,7 @@ def lime_testing_userinput(userinput):
     explanations = exp.as_list(label=class_index)
     explanations_as_array = np.array(explanations)
     # print("Explanations: ", explanations)
-    # print("Explanations as array: ", explanations_as_array)
+    print("Explanations as array: ", explanations_as_array)
     # print('Explanation for class %s' % class_names[class_index])
     # print('\n'.join(map(str, exp.as_list(label=class_index))))
 
@@ -121,7 +121,7 @@ def webhook():
 
         else:
             name = query_result.get('parameters').get('person').get('name')
-            print(name)
+            # print(name)
             fulfillment_text = "Hi " + name + ", nice to meet you. Please, tell me something about your day."
 
     elif query_result.get('action') == 'getinformation':
@@ -129,7 +129,7 @@ def webhook():
         text_to_analyze = text_to_analyze + " " + userinput
 
         # Make sure to get enough data to analyze.
-        if len(text_to_analyze) < 64:
+        if len(text_to_analyze) < 200:
             possible_answers = ["Please, tell me more.", "Please, let me know more about that.",
                                 "I would like to get to know you better, so, can you tell me more?",
                                 "To get to know you better, I still need some information",
@@ -139,6 +139,8 @@ def webhook():
             fulfillment_image = None
 
         else:
+            # text_to_analyze = text_to_analyze[:180]
+            print(len(text_to_analyze))
             prediction, explanations, figure = lime_testing_userinput(text_to_analyze)
             words = np.array([])
             weights = np.array([])
@@ -165,6 +167,9 @@ def webhook():
                     negative_words = np.append(negative_words, words[i])
 
                 print(negative_words)
+                # print(negative_idx)
+                for all in negative_idx:
+                    print("Negative weights:", weights[all])
 
             if positive_idx.size != 0:
                 positive_idx = np.concatenate(positive_idx)
@@ -172,13 +177,26 @@ def webhook():
                     positive_words = np.append(positive_words, words[i])
 
                 print(positive_words)
+                # print(positive_idx)
+                for all in positive_idx:
+                    print("Positive weights:", weights[all])
 
-            fulfillment_text = "Thank you " + name + " for telling me about your day. " \
-                                                     "According to what you said, you feel " \
-                               + prediction + ". The word with the biggest influence for this choice is: " + words[0]
+            if negative_idx.size == 0:
+                fulfillment_text = "Thank you " + name + " for telling me about your day. " \
+                                                         "According to what you said, you feel " + prediction + \
+                                   ". The words in favour of my choice for your feeling are " + '"' \
+                                   + '", "'.join([str(word) for word in positive_words]) + '"'
+            else:
+                fulfillment_text = "Thank you " + name + " for telling me about your day. " \
+                                                         "According to what you said, you feel " + prediction + \
+                                   ". The words in favour of my choice for your feeling are " + '"' \
+                                   + '", "'.join([str(word) for word in positive_words]) \
+                                   + '". The words that do not support my choice are: ' + '"'\
+                                   + '", "'.join([str(word) for word in negative_words]) + '".'
+                print(len(fulfillment_text))
 
             # fulfillment_text = "Thank you " + name + " for telling me about your day. According to what you said, you feel " + prediction + "."
-           # fulfillment_image = ("/Users/sandrinezeiter/Library/CloudStorage/OneDrive-UniversitédeFribourg/"
+            # fulfillment_image = ("/Users/sandrinezeiter/Library/CloudStorage/OneDrive-UniversitédeFribourg/"
             #       "Thesis/Chatty/XAIBot/figure.png")
             fulfillment_image = "https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg"
             text_to_analyze = ''  # So that I don't have to restart the whole script over and over again.
