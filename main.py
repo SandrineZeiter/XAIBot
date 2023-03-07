@@ -21,6 +21,8 @@ from lime.lime_text import LimeTextExplainer
 # import matplotlib
 import matplotlib
 
+
+
 # ----------------------- Definition of the plot -----------------------
 # To save the figure
 matplotlib.use("Agg")
@@ -52,10 +54,10 @@ vectorizer = TfidfVectorizer(analyzer='word', token_pattern=r'\b[a-zA-Z]{3,}\b',
                              min_df=5, max_df=0.7, stop_words='english')
 vectorizer.fit_transform(train['tweet'])
 
-rdf = RandomForestClassifier()
+rfc = RandomForestClassifier()
 mnb = MultinomialNB(alpha=0.1)
 p1 = make_pipeline(vectorizer, mnb)
-# p1 = make_pipeline(vectorizer, rdf)
+# p1 = make_pipeline(vectorizer, rfc)
 
 alpha_grid = np.logspace(-3, 0, 4)  # Is smoothing parameter for the counts
 param_grid = [{'multinomialnb__alpha': alpha_grid}]
@@ -126,6 +128,7 @@ def webhook():
 
         else:
             name = query_result.get('parameters').get('person').get('name')
+            name = name.title()
             # print(name)
             fulfillment_text = "Hi " + name + ", nice to meet you. Please, tell me something about your day."
 
@@ -168,12 +171,16 @@ def webhook():
 
             # Create fulfillment text for the chatbot
             fulfillment_text = "Thank you {} for telling me about your day. According to what you said, " \
-                               "you feel {}. The words in favor of my choice for your feeling are " \
-                               "\"{}\".".format(name, prediction, '", "'.join(str(word) for word in positive_words))
+                               "you feel {}. \nThe words in favor of my choice for your feeling are: " \
+                               "\"{}\".".format(name, prediction.upper(), '", "'.join(str(word) for word in positive_words).upper())
 
             if negative_idx.size > 0:
-                fulfillment_text += ". The words that do not support my choice are: \"{}\".".format(
-                    '", "'.join(str(word) for word in negative_words))
+                if negative_idx.size == 1:
+                    fulfillment_text += " \nThe word that would rather indicate a different feeling is: \"{}\".".format(
+                    '", "'.join(str(word) for word in negative_words).upper())
+                else:
+                    fulfillment_text += " \nThe words that would rather indicate a different feeling are: \"{}\".".format(
+                    '", "'.join(str(word) for word in negative_words).upper())
 
             # fulfillment_text = "Thank you " + name + " for telling me about your day. According to what you said, you feel " + prediction + "."
             # fulfillment_image = ("/Users/sandrinezeiter/Library/CloudStorage/OneDrive-UniversitédeFribourg/"
