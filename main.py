@@ -1,6 +1,9 @@
 # ----------------------- imports -----------------------
 # imports for flask
-from flask import request, Flask
+import base64
+import os
+
+from flask import request, Flask, jsonify
 
 # imports for ML
 import random
@@ -118,6 +121,7 @@ def webhook():
     # fulfillment_image = None
     query_result = req.get('queryResult')
 
+
     action = query_result.get('action')
     # print(query_result)
 
@@ -131,15 +135,24 @@ def webhook():
             name = name.title()
             # print(name)
             fulfillment_text = "Hi " + name + ", nice to meet you. Please, tell me something about your day."
-
+        res = {
+            "fulfillmentText": fulfillment_text,
+            "source": "webhookdata"
+        }
     elif action == 'denial':
         userinput = query_result["queryText"]
         text_to_analyze += " " + userinput
         fulfillment_text = "Too bad, you don't want to tell me anything. Are you really sure?"
-
+        res = {
+            "fulfillmentText": fulfillment_text,
+            "source": "webhookdata"
+        }
     elif action == 'confirmation':
         fulfillment_text = "Thanks anyway for your time, " + name + ". Have a nice day."
-
+        res = {
+            "fulfillmentText": fulfillment_text,
+            "source": "webhookdata"
+        }
     elif action == 'getinformation':
         userinput = query_result["queryText"]
         text_to_analyze += " " + userinput
@@ -154,9 +167,18 @@ def webhook():
 
             fulfillment_text = random.choice(possible_answers)
             # fulfillment_image = None
-
+            res = {
+                "fulfillmentText": fulfillment_text,
+                "source": "webhookdata"
+            }
         else:
             prediction, explanations = lime_testing_userinput(text_to_analyze)
+
+            with open("figure.png", 'rb') as f:
+                image_bytes = f.read()
+                image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+
+            print(image_base64[:30])
 
             # Build the np.arrays for words and weights
             words = explanations[:, 0].flatten()
@@ -187,15 +209,32 @@ def webhook():
             #       "Thesis/Chatty/XAIBot/figure.png")
             # fulfillment_image = "https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg"
 
+            res = {
+                "fulfillmentText": fulfillment_text,
+                "payload": {
+                    "image": {
+                        "imageUri": "data:image/png;base64," + image_base64
+                    }
+                },
+                "source": "webhookdata"
+            }
             # Set back the global variables
+
+
             text_to_analyze = ''
             name = ''
 
-    return {
-        "fulfillment_text": fulfillment_text,
-        # "fulfillment_image": fulfillment_image,
-        "source": "webhookdata"
-    }
+    return jsonify(res)
+    #{
+        # "fulfillment_text": fulfillment_text,
+        # # "fulfillment_image": fulfillment_image,
+        # "payload": {
+        #     "image": image_base64
+        # },
+        #res
+        #"source": "webhookdata"
+    #}
+
 
 
 # run the app
