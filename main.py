@@ -25,7 +25,8 @@ from lime.lime_text import LimeTextExplainer
 import matplotlib
 
 from PIL import Image
-
+from mimetypes import MimeTypes
+mime = MimeTypes()
 # ----------------------- Definition of the plot -----------------------
 # To save the figure
 matplotlib.use("Agg")
@@ -38,6 +39,10 @@ matplotlib.rc('figure', titlesize=20)
 # ----------------------- Define global variables -----------------------
 text_to_analyze = " "
 name = " "
+
+
+def make_url(mime_type, bin_data):
+    return 'data:' + mime_type + ';base64,' + bin_data
 
 # ----------------------- ML-part -----------------------
 # import dataset
@@ -97,8 +102,9 @@ def lime_testing_userinput(userinput):
     exp.as_pyplot_figure(label=exp.available_labels()[0])
     figure = plt.savefig("figure.png", bbox_inches="tight")
     # plt.show()
+    figure_mimetype = mime.guess_type("figure.png")[0]
 
-    return prediction, explanations_as_array
+    return prediction, explanations_as_array, figure_mimetype
     # , figure
 
 
@@ -172,22 +178,28 @@ def webhook():
                 "source": "webhookdata"
             }
         else:
-            prediction, explanations = lime_testing_userinput(text_to_analyze)
+            prediction, explanations, figure_mimetype = lime_testing_userinput(text_to_analyze)
 
-            with Image.open("figure.png") as img:
+            # with Image.open("figure.png") as img:
+            #
+            #     max_width = 500
+            #     if img.width > max_width:
+            #         img.resize((max_width, int(max_width*img.height/img.width)))
+            #
+            #     img = img.convert("RGB")
+            #     img.save("compressed_image.jpg", omptimize=True, quality=85)
+            #
+            # with open("compressed_image.jpg", 'rb') as f:
+            #     image_bytes = f.read()
+            #     image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+            #
+            # print(image_base64[:30])
 
-                max_width = 500
-                if img.width > max_width:
-                    img.resize((max_width, int(max_width*img.height/img.width)))
-
-                img = img.convert("RGB")
-                img.save("compressed_image.jpg", omptimize=True, quality=85)
-
-            with open("compressed_image.jpg", 'rb') as f:
-                image_bytes = f.read()
-                image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-
-            print(image_base64[:30])
+            with open("figure.png", 'rb') as f:
+                data = f.read()
+                data64 = base64.b64encode(data).decode('utf-8')
+                url = make_url(figure_mimetype, data64)
+                print("URL", url)
 
             # Build the np.arrays for words and weights
             words = explanations[:, 0].flatten()
@@ -231,7 +243,10 @@ def webhook():
                     },
                     {
                         "image": {
-                            "imageUri": "https://giphy.com/gifs/love-heart-little-bird-S9oNGC1E42VT2JRysv"},
+                            #"imageUri": url},
+                            "imageUri": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=="},
+                            #"imageUri": "https://giphy.com/gifs/love-heart-little-bird-S9oNGC1E42VT2JRysv"},
+                            #"imageUri": "figure.png"},
                             # "imageUri":"../imgs/compressed_image.jpg"},#data:image/png;base64," + image_base64
                         "platform": "TELEGRAM"
                     }],
