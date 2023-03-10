@@ -24,7 +24,7 @@ from lime.lime_text import LimeTextExplainer
 # import matplotlib
 import matplotlib
 
-
+from PIL import Image
 
 # ----------------------- Definition of the plot -----------------------
 # To save the figure
@@ -174,7 +174,16 @@ def webhook():
         else:
             prediction, explanations = lime_testing_userinput(text_to_analyze)
 
-            with open("figure.png", 'rb') as f:
+            with Image.open("figure.png") as img:
+
+                max_width = 500
+                if img.width > max_width:
+                    img.resize((max_width, int(max_width*img.height/img.width)))
+
+                img = img.convert("RGB")
+                img.save("compressed_image.jpg", omptimize=True, quality=85)
+
+            with open("compressed_image.jpg", 'rb') as f:
                 image_bytes = f.read()
                 image_base64 = base64.b64encode(image_bytes).decode('utf-8')
 
@@ -210,13 +219,24 @@ def webhook():
             # fulfillment_image = "https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg"
 
             res = {
-                "fulfillmentText": fulfillment_text,
-                "payload": {
-                    "image": {
-                        "imageUri": "data:image/png;base64," + image_base64
-                    }
-                },
-                "source": "webhookdata"
+              #  "fulfillmentText": fulfillment_text,
+                "fulfillmentMessages": [
+                    {
+                        "text": {
+                            "text": [
+                                fulfillment_text
+                            ]
+                        },
+                        "platform": "TELEGRAM"
+                    },
+                    {
+                        "image": {
+                            "imageUri": "https://giphy.com/gifs/love-heart-little-bird-S9oNGC1E42VT2JRysv"},
+                            # "imageUri":"../imgs/compressed_image.jpg"},#data:image/png;base64," + image_base64
+                        "platform": "TELEGRAM"
+                    }],
+          #     "imageUri":"https://giphy.com/gifs/love-heart-little-bird-S9oNGC1E42VT2JRysv"}     },
+                "source": "webhookdata",
             }
             # Set back the global variables
 
