@@ -1,7 +1,5 @@
 # ----------------------- imports -----------------------
-# imports for flask
-import base64
-import os
+import pickle
 
 from flask import request, Flask, jsonify
 
@@ -62,3 +60,6 @@ param_grid = [{'multinomialnb__alpha': alpha_grid}]
 gs = GridSearchCV(p1, param_grid=param_grid, cv=5, return_train_score=True)
 
 gs.fit(train.tweet, train.feeling)
+
+file = open("Model.train", 'wb')
+pickle.dump(gs, file)

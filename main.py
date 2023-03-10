@@ -2,6 +2,7 @@
 # imports for flask
 import base64
 import os
+import pickle
 
 from flask import request, Flask, jsonify
 
@@ -45,33 +46,36 @@ def make_url(mime_type, bin_data):
     return 'data:' + mime_type + ';base64,' + bin_data
 
 # ----------------------- ML-part -----------------------
-# import dataset
-data = pd.read_csv("/Users/sandrinezeiter/Library/CloudStorage/OneDrive-UniversitédeFribourg/"
-                   "Thesis/Twitter_cleaned.csv")
+# # import dataset
+# data = pd.read_csv("/Users/sandrinezeiter/Library/CloudStorage/OneDrive-UniversitédeFribourg/"
+#                    "Thesis/Twitter_cleaned.csv")
 
 # define the different class names for feelings
 class_names = ['afraid', 'alive', 'angry', 'confused', 'depressed', 'good', 'happy',
                'helpless', 'hurt', 'indifferent', 'interested', 'love', 'open', 'positive',
                'sad', 'strong']
 
-# split into training and test set
-train, test = train_test_split(data, train_size=0.9)
+# # split into training and test set
+# train, test = train_test_split(data, train_size=0.9)
+#
+# # tokenize the sentences
+# vectorizer = TfidfVectorizer(analyzer='word', token_pattern=r'\b[a-zA-Z]{3,}\b', lowercase=False,
+#                              min_df=5, max_df=0.7, stop_words='english')
+# vectorizer.fit_transform(train['tweet'])
+#
+# rfc = RandomForestClassifier()
+# mnb = MultinomialNB(alpha=0.1)
+# p1 = make_pipeline(vectorizer, mnb)
+# # p1 = make_pipeline(vectorizer, rfc)
+#
+# alpha_grid = np.logspace(-3, 0, 4)  # Is smoothing parameter for the counts
+# param_grid = [{'multinomialnb__alpha': alpha_grid}]
+# gs = GridSearchCV(p1, param_grid=param_grid, cv=5, return_train_score=True)
 
-# tokenize the sentences
-vectorizer = TfidfVectorizer(analyzer='word', token_pattern=r'\b[a-zA-Z]{3,}\b', lowercase=False,
-                             min_df=5, max_df=0.7, stop_words='english')
-vectorizer.fit_transform(train['tweet'])
+#gs.fit(train.tweet, train.feeling)
 
-rfc = RandomForestClassifier()
-mnb = MultinomialNB(alpha=0.1)
-p1 = make_pipeline(vectorizer, mnb)
-# p1 = make_pipeline(vectorizer, rfc)
-
-alpha_grid = np.logspace(-3, 0, 4)  # Is smoothing parameter for the counts
-param_grid = [{'multinomialnb__alpha': alpha_grid}]
-gs = GridSearchCV(p1, param_grid=param_grid, cv=5, return_train_score=True)
-
-gs.fit(train.tweet, train.feeling)
+file = open("Model.train",'rb')
+gs = pickle.load(file)
 
 # ----------------------- LIME -----------------------
 
