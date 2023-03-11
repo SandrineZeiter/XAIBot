@@ -130,10 +130,16 @@ def webhook():
     fulfillment_text = ''
     # fulfillment_image = None
     query_result = req.get('queryResult')
-
+    # print(query_result)
 
     action = query_result.get('action')
-    # print(query_result)
+
+    output = query_result.get('outputContexts')[0].get('name')
+    # print("OutputContext", output)
+    name_parts = output.split('/')
+    # Session_id should last for 20min
+    session_id = '/'.join(name_parts[4:5])
+    print(session_id)
 
     if action == 'getname':
 
