@@ -1,2 +1,3 @@
-web: bundle exec rails server
+web: gunicorn wsgi:app
+# web: bundle exec rails server
 
