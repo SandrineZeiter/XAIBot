@@ -1,12 +1,12 @@
-FROM ubuntu:latest
+FROM python:3.10.10-buster
 
 RUN apt-get update && \
-    apt-get install -y python3 python3-pip libatlas-base-dev
+    apt-get install -y libatlas-base-dev && \
+    pip install --no-cache-dir -r requirements.txt
 
+COPY . /app
 WORKDIR /app
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
 
-COPY . .
+EXPOSE 5000
 
-CMD ["python3", "main.py"]
+CMD [ "python", "main.py" ]
