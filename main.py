@@ -1,7 +1,6 @@
 # ----------------------- imports -----------------------
 # imports for flask
 import base64
-import os
 import pickle
 
 from flask import request, Flask, jsonify
