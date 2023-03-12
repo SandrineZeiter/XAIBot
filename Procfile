@@ -1,1 +1,1 @@
-web: gunicorn xaibo-app:xaibot-app
+web: gunicorn wsgi:xaibot-app
