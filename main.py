@@ -1,5 +1,7 @@
 # ----------------------- imports -----------------------
 # imports for flask
+import json
+
 from flask import request, Flask, jsonify
 
 # imports for picture
@@ -32,9 +34,10 @@ from mimetypes import MimeTypes
 mime = MimeTypes()
 
 # imports for daily notification
-# import schedule
-# import time
-# import requests
+import requests
+import datetime
+import time
+import schedule
 
 # ----------------------- Definition of the plot -----------------------
 # To save the figure
@@ -49,6 +52,37 @@ matplotlib.rc('figure', titlesize=20)
 text_to_analyze = " "
 name = " "
 
+telegram_token = "5875425343:AAEYkMnnHTmRput4Jmax063dK8bq_GwRw9Q"
+telegram_base_url = f"https://api.telegram.org/bot{telegram_token}"
+
+
+def send_message(chat_id, text):
+    url = f"{telegram_base_url}/sendMessage?chat_id={chat_id}&text={text}"
+    requests.get(url)
+    print(f"Chat ID: {chat_id}")
+
+# send_message('5975577883', "Test message") # my chat_id = 5975577883
+# t = time.localtime()
+# current_time = time.strftime("%H:%M:%S", t)
+# print(current_time)
+
+def daily_message():
+    #now = datetime.datetime.now()
+    t = time.localtime()
+    send_time = datetime.time(21, 0, 0)
+
+    if t == send_time:
+        message = "Test message"
+
+        chat_id = '5975577883' # my chat_id = 5975577883
+
+        send_message(chat_id, message)
+
+daily_message()
+
+#while True:
+#    daily_message()
+#    time.sleep(60)
 
 def make_url(mime_type, bin_data):
     return 'data:' + mime_type + ';base64,' + bin_data
@@ -147,7 +181,10 @@ def webhook():
     name_parts = output.split('/')
     # Session_id should last for 20min
     session_id = '/'.join(name_parts[4:5])
-    print(session_id)
+    print("Session ID", session_id)
+
+
+    app.logger.info(json.dumps(req, indent=4))
 
     if action == 'getname':
 
