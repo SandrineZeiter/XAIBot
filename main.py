@@ -1,9 +1,12 @@
 # ----------------------- imports -----------------------
 # imports for flask
-import base64
-import pickle
-
 from flask import request, Flask, jsonify
+
+# imports for picture
+import base64
+
+# imports for pickle to use the train.py
+import pickle
 
 # imports for ML
 import random
@@ -15,7 +18,7 @@ from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
-import pandas as pd
+# import pandas as pd
 import numpy as np
 
 # imports for LIME
@@ -27,6 +30,12 @@ import matplotlib
 from PIL import Image
 from mimetypes import MimeTypes
 mime = MimeTypes()
+
+# imports for daily notification
+import schedule
+import time
+import requests
+
 # ----------------------- Definition of the plot -----------------------
 # To save the figure
 matplotlib.use("Agg")
