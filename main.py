@@ -13,12 +13,7 @@ import pickle
 # imports for ML
 import random
 
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer, TfidfTransformer
-from sklearn.pipeline import make_pipeline, Pipeline
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import train_test_split
+
 import matplotlib.pyplot as plt
 # import pandas as pd
 import numpy as np
@@ -31,11 +26,13 @@ import matplotlib
 
 from PIL import Image
 from mimetypes import MimeTypes
+
 mime = MimeTypes()
 
 # imports for daily notification
 import requests
 import datetime
+from datetime import datetime
 import time
 import schedule
 
@@ -52,6 +49,7 @@ matplotlib.rc('figure', titlesize=20)
 text_to_analyze = " "
 name = " "
 
+# ----------------------- Send notification -----------------------
 telegram_token = "5875425343:AAEYkMnnHTmRput4Jmax063dK8bq_GwRw9Q"
 telegram_base_url = f"https://api.telegram.org/bot{telegram_token}"
 
@@ -61,62 +59,38 @@ def send_message(chat_id, text):
     requests.get(url)
     print(f"Chat ID: {chat_id}")
 
-# send_message('5975577883', "Test message") # my chat_id = 5975577883
-# t = time.localtime()
-# current_time = time.strftime("%H:%M:%S", t)
-# print(current_time)
 
 def daily_message():
-    #now = datetime.datetime.now()
-    t = time.localtime()
-    send_time = datetime.time(21, 0, 0)
+    now = datetime.now()
+    time_str = now.strftime("%H:%M")
+    print(time_str)
 
-    if t == send_time:
-        message = "Test message"
+    send_time = datetime(now.year, now.month, now.day, 21, 30,0)
+    send_time_str = send_time.strftime("%H:%M")
+    print(send_time_str)
 
-        chat_id = '5975577883' # my chat_id = 5975577883
-
+    if time_str == send_time_str:
+        message = "Hi, how are you today?"
+        chat_id = '5975577883'  # my chat_id = 5975577883
         send_message(chat_id, message)
 
-daily_message()
 
 #while True:
-#    daily_message()
-#    time.sleep(60)
+ #   daily_message()
+  #  time.sleep(30)
+
 
 def make_url(mime_type, bin_data):
     return 'data:' + mime_type + ';base64,' + bin_data
 
-# ----------------------- ML-part -----------------------
-# # import dataset
-# data = pd.read_csv("/Users/sandrinezeiter/Library/CloudStorage/OneDrive-UniversitédeFribourg/"
-#                    "Thesis/Twitter_cleaned.csv")
 
+# ----------------------- Setup the trained model -----------------------
 # define the different class names for feelings
 class_names = ['afraid', 'alive', 'angry', 'confused', 'depressed', 'good', 'happy',
                'helpless', 'hurt', 'indifferent', 'interested', 'love', 'open', 'positive',
                'sad', 'strong']
 
-# # split into training and test set
-# train, test = train_test_split(data, train_size=0.9)
-#
-# # tokenize the sentences
-# vectorizer = TfidfVectorizer(analyzer='word', token_pattern=r'\b[a-zA-Z]{3,}\b', lowercase=False,
-#                              min_df=5, max_df=0.7, stop_words='english')
-# vectorizer.fit_transform(train['tweet'])
-#
-# rfc = RandomForestClassifier()
-# mnb = MultinomialNB(alpha=0.1)
-# p1 = make_pipeline(vectorizer, mnb)
-# # p1 = make_pipeline(vectorizer, rfc)
-#
-# alpha_grid = np.logspace(-3, 0, 4)  # Is smoothing parameter for the counts
-# param_grid = [{'multinomialnb__alpha': alpha_grid}]
-# gs = GridSearchCV(p1, param_grid=param_grid, cv=5, return_train_score=True)
-
-#gs.fit(train.tweet, train.feeling)
-
-file = open("Model.train",'rb')
+file = open("Model.train", 'rb')
 gs = pickle.load(file)
 
 # ----------------------- LIME -----------------------
@@ -127,10 +101,8 @@ explainer = LimeTextExplainer(class_names=class_names)
 
 def lime_testing_userinput(userinput):
     # creating explainer
-    # explainer = LimeTextExplainer(class_names=class_names)
-    # p1.fit(train.tweet, train.sub_category)
     exp = explainer.explain_instance(userinput,
-                                     gs.predict_proba, # instead of p1.predict_proba
+                                     gs.predict_proba,  # instead of p1.predict_proba
                                      num_samples=5000,
                                      num_features=5,
                                      top_labels=len(class_names))
@@ -182,7 +154,6 @@ def webhook():
     # Session_id should last for 20min
     session_id = '/'.join(name_parts[4:5])
     print("Session ID", session_id)
-
 
     app.logger.info(json.dumps(req, indent=4))
 
@@ -270,15 +241,16 @@ def webhook():
             # Create fulfillment text for the chatbot
             fulfillment_text = "Thank you {} for telling me about your day. According to what you said, " \
                                "you feel {}. \nThe words in favor of my choice for your feeling are: " \
-                               "\"{}\".".format(name, prediction.upper(), '", "'.join(str(word) for word in positive_words).upper())
+                               "\"{}\".".format(name, prediction.upper(),
+                                                '", "'.join(str(word) for word in positive_words).upper())
 
             if negative_idx.size > 0:
                 if negative_idx.size == 1:
                     fulfillment_text += " \nThe word that would rather indicate a different feeling is: \"{}\".".format(
-                    '", "'.join(str(word) for word in negative_words).upper())
+                        '", "'.join(str(word) for word in negative_words).upper())
                 else:
                     fulfillment_text += " \nThe words that would rather indicate a different feeling are: \"{}\".".format(
-                    '", "'.join(str(word) for word in negative_words).upper())
+                        '", "'.join(str(word) for word in negative_words).upper())
 
             # fulfillment_text = "Thank you " + name + " for telling me about your day. According to what you said, you feel " + prediction + "."
             # fulfillment_image = ("/Users/sandrinezeiter/Library/CloudStorage/OneDrive-UniversitédeFribourg/"
@@ -286,7 +258,7 @@ def webhook():
             # fulfillment_image = "https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg"
 
             res = {
-              #  "fulfillmentText": fulfillment_text,
+                #  "fulfillmentText": fulfillment_text,
                 "fulfillmentMessages": [
                     {
                         "text": {
@@ -298,33 +270,31 @@ def webhook():
                     },
                     {
                         "image": {
-                            #"imageUri": url},
+                            # "imageUri": url},
                             "imageUri": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=="},
-                            #"imageUri": "https://giphy.com/gifs/love-heart-little-bird-S9oNGC1E42VT2JRysv"},
-                            #"imageUri": "figure.png"},
-                            # "imageUri":"../imgs/compressed_image.jpg"},#data:image/png;base64," + image_base64
+                        # "imageUri": "https://giphy.com/gifs/love-heart-little-bird-S9oNGC1E42VT2JRysv"},
+                        # "imageUri": "figure.png"},
+                        # "imageUri":"../imgs/compressed_image.jpg"},#data:image/png;base64," + image_base64
                         "platform": "TELEGRAM"
                     }],
-          #     "imageUri":"https://giphy.com/gifs/love-heart-little-bird-S9oNGC1E42VT2JRysv"}     },
+                #     "imageUri":"https://giphy.com/gifs/love-heart-little-bird-S9oNGC1E42VT2JRysv"}     },
                 "source": "webhookdata",
             }
             # Set back the global variables
-
 
             text_to_analyze = ''
             name = ''
 
     return jsonify(res)
-    #{
-        # "fulfillment_text": fulfillment_text,
-        # # "fulfillment_image": fulfillment_image,
-        # "payload": {
-        #     "image": image_base64
-        # },
-        #res
-        #"source": "webhookdata"
-    #}
-
+    # {
+    # "fulfillment_text": fulfillment_text,
+    # # "fulfillment_image": fulfillment_image,
+    # "payload": {
+    #     "image": image_base64
+    # },
+    # res
+    # "source": "webhookdata"
+    # }
 
 
 # run the app
