@@ -32,9 +32,9 @@ from mimetypes import MimeTypes
 mime = MimeTypes()
 
 # imports for daily notification
-import schedule
-import time
-import requests
+# import schedule
+# import time
+# import requests
 
 # ----------------------- Definition of the plot -----------------------
 # To save the figure
